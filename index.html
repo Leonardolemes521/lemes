@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Planilha de Custos</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: center;
+        }
+
+        th {
+            font-size: 14px;
+        }
+
+        td input {
+            width: 100%;
+            font-size: 14px;
+            text-align: center; /* Centraliza os valores nos inputs */
+            border: none;
+            outline: none;
+        }
+
+        button {
+            padding: 5px 10px;
+            background-color: #ff6666;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #ff3333;
+        }
+
+        button#adicionar-linha {
+            margin-top: 10px;
+            background-color: #66cc66;
+        }
+
+        button#adicionar-linha:hover {
+            background-color: #33aa33;
+        }
+
+        .graficos {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+            align-items: center;
+        }
+
+        .grafico-container {
+            text-align: center;
+            max-width: 120px;
+        }
+
+        canvas {
+            width: 90px !important;
+            height: 90px !important;
+            margin: 0 auto;
+        }
+
+        .grafico-valor {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        /* Responsividade */
+        @media (max-width: 600px) {
+            table, .graficos {
+                width: 100%;
+            }
+
+            .grafico-container {
+                max-width: 100px;
+                margin-bottom: 10px;
+            }
+
+            .grafico-valor {
+                font-size: 10px;
+            }
+
+            td input {
+                font-size: 12px;
+            }
+
+            button {
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 4px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Planilha de Custos</h1>
+
+    <label for="valor-total">Valor Total Disponível: R$</label>
+    <input type="text" id="valor-total" placeholder="Digite o valor total" />
+
+    <div class="graficos">
+        <div class="grafico-container">
+            <h3>Valor Total</h3>
+            <canvas id="grafico-total"></canvas>
+            <div id="valor-total-display" class="grafico-valor">R$ 0,00</div>
+        </div>
+        <div class="grafico-container">
+            <h3>Gastos</h3>
+            <canvas id="grafico-gasto"></canvas>
+            <div id="gastos-display" class="grafico-valor">R$ 0,00</div>
+        </div>
+        <div class="grafico-container">
+            <h3>Disponível</h3>
+            <canvas id="grafico-disponivel"></canvas>
+            <div id="saldo-disponivel-display" class="grafico-valor">R$ 0,00</div>
+        </div>
+    </div>
+
+    <table id="planilha">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Quantidade</th>
+                <th>Preço Unitário (R$)</th>
+                <th>Total (R$)</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Linhas da planilha vão ser inseridas aqui -->
+        </tbody>
+    </table>
+
+    <button id="adicionar-linha">Adicionar Linha</button>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const tabela = document.getElementById("planilha").querySelector("tbody");
+            const adicionarLinhaBtn = document.getElementById("adicionar-linha");
+            const valorTotalDisplay = document.getElementById("valor-total-display");
+            const saldoDisponivelDisplay = document.getElementById("saldo-disponivel-display");
+            const gastosDisplay = document.getElementById("gastos-display");
+
+            const graficoTotal = document.getElementById("grafico-total");
+            const graficoGasto = document.getElementById("grafico-gasto");
+            const graficoDisponivel = document.getElementById("grafico-disponivel");
+
+            const criarGrafico = (ctx, dados, cores) => {
+                return new Chart(ctx, {
+                    type: "doughnut",
+                    data: {
+                        labels: ["Disponível", "Gasto"],
+                        datasets: [{
+                            data: dados,
+                            backgroundColor: cores,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: false // Desabilita a exibição de valores ao clicar
+                            }
+                        },
+                        cutout: "75%",
+                        responsive: false
+                    }
+                });
+            };
+
+            // Inicializando com valores padrões
+            let chartTotal = criarGrafico(
+                graficoTotal.getContext("2d"),
+                [100],
+                ["green"]
+            );
+
+            let chartGasto = criarGrafico(
+                graficoGasto.getContext("2d"),
+                [0, 100],
+                ["green", "red"]
+            );
+
+            let chartDisponivel = criarGrafico(
+                graficoDisponivel.getContext("2d"),
+                [100],
+                ["yellow"]
+            );
+
+            const formatarValor = (valor) => {
+                return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            };
+
+            const salvarDados = () => {
+                const linhas = [];
+                tabela.querySelectorAll("tr").forEach(row => {
+                    const cells = row.querySelectorAll("td");
+                    const descricao = cells[0].querySelector("input").value;
+                    const quantidade = cells[1].querySelector("input").value;
+                    const preco = cells[2].querySelector("input").value;
+                    const total = quantidade * preco;
+
+                    linhas.push({ descricao, quantidade, preco, total });
+                });
+
+                // Salvar no localStorage
+                localStorage.setItem("planilhaDados", JSON.stringify(linhas));
+                localStorage.setItem("valorTotal", document.getElementById("valor-total").value);
+            };
+
+            const carregarDados = () => {
+                const dadosSalvos = JSON.parse(localStorage.getItem("planilhaDados"));
+                const valorTotalSalvo = localStorage.getItem("valorTotal");
+
+                if (dadosSalvos) {
+                    dadosSalvos.forEach(dado => {
+                        const novaLinha = document.createElement("tr");
+                        novaLinha.innerHTML = `
+                            <td><input type="text" value="${dado.descricao}" /></td>
+                            <td><input type="number" value="${dado.quantidade}" /></td>
+                            <td><input type="number" value="${dado.preco}" /></td>
+                            <td class="total">${formatarValor(dado.total)}</td>
+                            <td><button class="excluir-linha">Excluir</button></td>
+                        `;
+                        tabela.appendChild(novaLinha);
+                    });
+                }
+
+                if (valorTotalSalvo) {
+                    document.getElementById("valor-total").value = valorTotalSalvo;
+                }
+
+                atualizarGraficos();  // Atualiza os gráficos após carregar os dados
+            };
+
+            const atualizarGraficos = () => {
+                let valorTotal = parseFloat(document.getElementById("valor-total").value.replace(/\./g, '').replace(',', '.')) || 0;
+                let valorGasto = 0;
+
+                tabela.querySelectorAll("tr").forEach(row => {
+                    const cells = row.querySelectorAll("td");
+                    const quantidade = parseFloat(cells[1].querySelector("input").value) || 0;
+                    const preco = parseFloat(cells[2].querySelector("input").value) || 0;
+                    const total = quantidade * preco;
+                    cells[3].textContent = formatarValor(total); // Atualiza o valor total da linha
+                    valorGasto += total;
+                });
+
+                const saldoDisponivel = valorTotal - valorGasto;
+
+                valorTotalDisplay.textContent = formatarValor(valorTotal);
+                gastosDisplay.textContent = formatarValor(valorGasto);
+                saldoDisponivelDisplay.textContent = formatarValor(saldoDisponivel);
+
+                const porcentagemGasto = valorTotal > 0 ? (valorGasto / valorTotal) * 100 : 0;
+
+                chartTotal.data.datasets[0].data = [valorTotal];
+                chartTotal.update();
+
+                chartGasto.data.datasets[0].data = [100 - porcentagemGasto, porcentagemGasto];
+                chartGasto.data.datasets[0].backgroundColor = [
+                    porcentagemGasto < 50 ? "green" : "red",
+                    porcentagemGasto < 50 ? "red" : "green"
+                ];
+                chartGasto.update();
+
+                chartDisponivel.data.datasets[0].data = [saldoDisponivel];
+                chartDisponivel.update();
+
+                salvarDados();
+            };
+
+            const formatarComMilhar = (input) => {
+                let valor = input.value.replace(/\D/g, '');
+                input.value = valor.replace(/(\d)(\d{3})$/, '$1.$2').replace(/(\d)(\d{3})$/, '$1.$2');
+            };
+
+            document.getElementById("valor-total").addEventListener("input", (event) => {
+                formatarComMilhar(event.target);
+                atualizarGraficos();
+            });
+
+            adicionarLinhaBtn.addEventListener("click", () => {
+                const novaLinha = document.createElement("tr");
+                novaLinha.innerHTML = `
+                    <td><input type="text" placeholder="Descrição" /></td>
+                    <td><input type="number" placeholder="Quantidade" /></td>
+                    <td><input type="number" placeholder="Preço" /></td>
+                    <td>R$ 0,00</td>
+                    <td><button class="excluir-linha">Excluir</button></td>
+                `;
+                tabela.appendChild(novaLinha);
+                salvarDados();
+            });
+
+            tabela.addEventListener("click", (e) => {
+                if (e.target.classList.contains("excluir-linha")) {
+                    e.target.closest("tr").remove();
+                    atualizarGraficos();
+                }
+            });
+
+            tabela.addEventListener("input", atualizarGraficos);
+            document.getElementById("valor-total").addEventListener("input", atualizarGraficos);
+
+            carregarDados(); // Carregar os dados ao iniciar
+        });
+    </script>
+</body>
+</html>
