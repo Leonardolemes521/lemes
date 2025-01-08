@@ -15,6 +15,25 @@
             text-align: center;
         }
 
+        .menu {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .menu button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        .menu button:hover {
+            background-color: #45a049;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -34,7 +53,7 @@
         td input {
             width: 100%;
             font-size: 14px;
-            text-align: center; /* Centraliza os valores nos inputs */
+            text-align: center;
             border: none;
             outline: none;
         }
@@ -88,7 +107,6 @@
             font-weight: bold;
         }
 
-        /* Responsividade */
         @media (max-width: 600px) {
             table, .graficos {
                 width: 100%;
@@ -121,6 +139,11 @@
 </head>
 <body>
     <h1>Planilha de Custos</h1>
+
+    <div class="menu">
+        <button id="nova-planilha">Criar Nova Planilha</button>
+        <button id="carregar-planilha">Carregar Planilha</button>
+    </div>
 
     <label for="valor-total">Valor Total Disponível: R$</label>
     <input type="text" id="valor-total" placeholder="Digite o valor total" />
@@ -159,11 +182,11 @@
     </table>
 
     <button id="adicionar-linha">Adicionar Linha</button>
+    <button id="salvar-planilha">Salvar Planilha</button>
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const tabela = document.getElementById("planilha").querySelector("tbody");
-            const adicionarLinhaBtn = document.getElementById("adicionar-linha");
             const valorTotalDisplay = document.getElementById("valor-total-display");
             const saldoDisponivelDisplay = document.getElementById("saldo-disponivel-display");
             const gastosDisplay = document.getElementById("gastos-display");
@@ -189,7 +212,7 @@
                                 display: false
                             },
                             tooltip: {
-                                enabled: false // Desabilita a exibição de valores ao clicar
+                                enabled: false
                             }
                         },
                         cutout: "75%",
@@ -198,7 +221,6 @@
                 });
             };
 
-            // Inicializando com valores padrões
             let chartTotal = criarGrafico(
                 graficoTotal.getContext("2d"),
                 [100],
@@ -208,7 +230,7 @@
             let chartGasto = criarGrafico(
                 graficoGasto.getContext("2d"),
                 [0, 100],
-                ["green", "red"]
+                ["red", "green"]
             );
 
             let chartDisponivel = criarGrafico(
@@ -221,7 +243,7 @@
                 return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             };
 
-            const salvarDados = () => {
+            const salvarDados = (nome) => {
                 const linhas = [];
                 tabela.querySelectorAll("tr").forEach(row => {
                     const cells = row.querySelectorAll("td");
@@ -233,17 +255,15 @@
                     linhas.push({ descricao, quantidade, preco, total });
                 });
 
-                // Salvar no localStorage
-                localStorage.setItem("planilhaDados", JSON.stringify(linhas));
-                localStorage.setItem("valorTotal", document.getElementById("valor-total").value);
+                const valorTotal = document.getElementById("valor-total").value;
+                localStorage.setItem(nome, JSON.stringify({ planilha: linhas, valorTotal }));
             };
 
-            const carregarDados = () => {
-                const dadosSalvos = JSON.parse(localStorage.getItem("planilhaDados"));
-                const valorTotalSalvo = localStorage.getItem("valorTotal");
-
+            const carregarDados = (nome) => {
+                const dadosSalvos = JSON.parse(localStorage.getItem(nome));
                 if (dadosSalvos) {
-                    dadosSalvos.forEach(dado => {
+                    tabela.innerHTML = "";  // Limpa a tabela antes de carregar
+                    dadosSalvos.planilha.forEach(dado => {
                         const novaLinha = document.createElement("tr");
                         novaLinha.innerHTML = `
                             <td><input type="text" value="${dado.descricao}" /></td>
@@ -254,13 +274,9 @@
                         `;
                         tabela.appendChild(novaLinha);
                     });
+                    document.getElementById("valor-total").value = dadosSalvos.valorTotal;
                 }
-
-                if (valorTotalSalvo) {
-                    document.getElementById("valor-total").value = valorTotalSalvo;
-                }
-
-                atualizarGraficos();  // Atualiza os gráficos após carregar os dados
+                atualizarGraficos();
             };
 
             const atualizarGraficos = () => {
@@ -282,35 +298,43 @@
                 gastosDisplay.textContent = formatarValor(valorGasto);
                 saldoDisponivelDisplay.textContent = formatarValor(saldoDisponivel);
 
-                const porcentagemGasto = valorTotal > 0 ? (valorGasto / valorTotal) * 100 : 0;
-
                 chartTotal.data.datasets[0].data = [valorTotal];
                 chartTotal.update();
 
-                chartGasto.data.datasets[0].data = [100 - porcentagemGasto, porcentagemGasto];
+                // Agora o gráfico de gastos será 100% vermelho assim que houver qualquer gasto
+                const corGasto = valorGasto > 0 ? "red" : "green";
+                chartGasto.data.datasets[0].data = [valorGasto, 100 - valorGasto];
                 chartGasto.data.datasets[0].backgroundColor = [
-                    porcentagemGasto < 50 ? "green" : "red",
-                    porcentagemGasto < 50 ? "red" : "green"
+                    corGasto,  // Vermelho para gasto
+                    "green"    // Parte disponível
                 ];
                 chartGasto.update();
 
                 chartDisponivel.data.datasets[0].data = [saldoDisponivel];
                 chartDisponivel.update();
-
-                salvarDados();
             };
 
-            const formatarComMilhar = (input) => {
-                let valor = input.value.replace(/\D/g, '');
-                input.value = valor.replace(/(\d)(\d{3})$/, '$1.$2').replace(/(\d)(\d{3})$/, '$1.$2');
-            };
-
-            document.getElementById("valor-total").addEventListener("input", (event) => {
-                formatarComMilhar(event.target);
+            document.getElementById("nova-planilha").addEventListener("click", () => {
+                tabela.innerHTML = "";  // Limpa a tabela para uma nova planilha
+                document.getElementById("valor-total").value = "";
                 atualizarGraficos();
             });
 
-            adicionarLinhaBtn.addEventListener("click", () => {
+            document.getElementById("carregar-planilha").addEventListener("click", () => {
+                const planilhasSalvas = Object.keys(localStorage);
+                if (planilhasSalvas.length > 0) {
+                    const nomePlanilha = prompt("Escolha o nome da planilha para carregar:\n\n" + planilhasSalvas.join("\n"));
+                    if (nomePlanilha && localStorage.getItem(nomePlanilha)) {
+                        carregarDados(nomePlanilha);
+                    } else {
+                        alert("Planilha não encontrada.");
+                    }
+                } else {
+                    alert("Nenhuma planilha salva.");
+                }
+            });
+
+            document.getElementById("adicionar-linha").addEventListener("click", () => {
                 const novaLinha = document.createElement("tr");
                 novaLinha.innerHTML = `
                     <td><input type="text" placeholder="Descrição" /></td>
@@ -320,7 +344,21 @@
                     <td><button class="excluir-linha">Excluir</button></td>
                 `;
                 tabela.appendChild(novaLinha);
-                salvarDados();
+                atualizarGraficos();
+            });
+
+            document.getElementById("salvar-planilha").addEventListener("click", () => {
+                const nomePlanilha = prompt("Digite o nome para salvar a planilha:");
+                if (nomePlanilha) {
+                    salvarDados(nomePlanilha);
+                    alert(`Planilha ${nomePlanilha} salva com sucesso!`);
+                } else {
+                    alert("O nome da planilha não pode estar vazio.");
+                }
+            });
+
+            tabela.addEventListener("input", () => {
+                atualizarGraficos();  // Recalcula os totais quando há alterações nas células
             });
 
             tabela.addEventListener("click", (e) => {
@@ -330,10 +368,7 @@
                 }
             });
 
-            tabela.addEventListener("input", atualizarGraficos);
-            document.getElementById("valor-total").addEventListener("input", atualizarGraficos);
-
-            carregarDados(); // Carregar os dados ao iniciar
+            atualizarGraficos();
         });
     </script>
 </body>
