@@ -280,39 +280,54 @@
             };
 
             const atualizarGraficos = () => {
-                let valorTotal = parseFloat(document.getElementById("valor-total").value.replace(/\./g, '').replace(',', '.')) || 0;
-                let valorGasto = 0;
+    let valorTotal = parseFloat(document.getElementById("valor-total").value.replace(/\./g, '').replace(',', '.')) || 0;
+    let valorGasto = 0;
 
-                tabela.querySelectorAll("tr").forEach(row => {
-                    const cells = row.querySelectorAll("td");
-                    const quantidade = parseFloat(cells[1].querySelector("input").value) || 0;
-                    const preco = parseFloat(cells[2].querySelector("input").value) || 0;
-                    const total = quantidade * preco;
-                    cells[3].textContent = formatarValor(total); // Atualiza o valor total da linha
-                    valorGasto += total;
-                });
+    tabela.querySelectorAll("tr").forEach(row => {
+        const cells = row.querySelectorAll("td");
+        const quantidade = parseFloat(cells[1].querySelector("input").value) || 0;
+        const preco = parseFloat(cells[2].querySelector("input").value) || 0;
+        const total = quantidade * preco;
+        cells[3].textContent = formatarValor(total); // Atualiza o valor total da linha
+        valorGasto += total;
+    });
 
-                const saldoDisponivel = valorTotal - valorGasto;
+    const saldoDisponivel = valorTotal - valorGasto;
 
-                valorTotalDisplay.textContent = formatarValor(valorTotal);
-                gastosDisplay.textContent = formatarValor(valorGasto);
-                saldoDisponivelDisplay.textContent = formatarValor(saldoDisponivel);
+    valorTotalDisplay.textContent = formatarValor(valorTotal);
+    gastosDisplay.textContent = formatarValor(valorGasto);
+    saldoDisponivelDisplay.textContent = formatarValor(saldoDisponivel);
 
-                chartTotal.data.datasets[0].data = [valorTotal];
-                chartTotal.update();
+    // Gráfico Total
+    chartTotal.data.datasets[0].data = [valorTotal];
+    chartTotal.update();
 
-                // Agora o gráfico de gastos será 100% vermelho assim que houver qualquer gasto
-                const corGasto = valorGasto > 0 ? "red" : "green";
-                chartGasto.data.datasets[0].data = [valorGasto, 100 - valorGasto];
-                chartGasto.data.datasets[0].backgroundColor = [
-                    corGasto,  // Vermelho para gasto
-                    "green"    // Parte disponível
-                ];
-                chartGasto.update();
+    // Gráfico de Gastos
+    if (valorGasto >= valorTotal) {
+        chartGasto.data.datasets[0].data = [100, 0];
+        chartGasto.data.datasets[0].backgroundColor = ["red", "transparent"];
+    } else {
+        const porcentagemGasto = (valorGasto / valorTotal) * 100;
+        const porcentagemDisponivel = 100 - porcentagemGasto;
+        chartGasto.data.datasets[0].data = [porcentagemGasto, porcentagemDisponivel];
+        chartGasto.data.datasets[0].backgroundColor = ["red", "green"];
+    }
+    chartGasto.update();
 
-                chartDisponivel.data.datasets[0].data = [saldoDisponivel];
-                chartDisponivel.update();
-            };
+    // Gráfico de Disponível
+    if (valorGasto >= valorTotal) {
+        chartDisponivel.data.datasets[0].data = [100, 0];
+        chartDisponivel.data.datasets[0].backgroundColor = ["yellow", "transparent"];
+    } else {
+        const porcentagemAmarelo = (valorGasto / valorTotal) * 100;
+        const porcentagemCinza = 100 - porcentagemAmarelo;
+        chartDisponivel.data.datasets[0].data = [porcentagemAmarelo, porcentagemCinza];
+        chartDisponivel.data.datasets[0].backgroundColor = ["yellow", "gray"];
+    }
+    chartDisponivel.update();
+};
+
+            
 
             document.getElementById("nova-planilha").addEventListener("click", () => {
                 tabela.innerHTML = "";  // Limpa a tabela para uma nova planilha
@@ -321,18 +336,86 @@
             });
 
             document.getElementById("carregar-planilha").addEventListener("click", () => {
-                const planilhasSalvas = Object.keys(localStorage);
-                if (planilhasSalvas.length > 0) {
-                    const nomePlanilha = prompt("Escolha o nome da planilha para carregar:\n\n" + planilhasSalvas.join("\n"));
-                    if (nomePlanilha && localStorage.getItem(nomePlanilha)) {
-                        carregarDados(nomePlanilha);
-                    } else {
-                        alert("Planilha não encontrada.");
-                    }
-                } else {
-                    alert("Nenhuma planilha salva.");
+    const planilhasSalvas = Object.keys(localStorage);
+    if (planilhasSalvas.length > 0) {
+        const menuCarregar = document.createElement("div");
+        menuCarregar.style.position = "fixed";
+        menuCarregar.style.top = "50%";
+        menuCarregar.style.left = "50%";
+        menuCarregar.style.transform = "translate(-50%, -50%)";
+        menuCarregar.style.background = "#f9f9f9";
+        menuCarregar.style.padding = "20px";
+        menuCarregar.style.border = "1px solid #ddd";
+        menuCarregar.style.borderRadius = "10px";
+        menuCarregar.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.1)";
+        menuCarregar.style.zIndex = "1000";
+
+        const listaPlanilhas = document.createElement("ul");
+        listaPlanilhas.style.listStyle = "none";
+        listaPlanilhas.style.padding = "0";
+
+        planilhasSalvas.forEach(nome => {
+            const item = document.createElement("li");
+            item.style.marginBottom = "10px";
+            item.style.display = "flex";
+            item.style.alignItems = "center"; // Alinha os itens na horizontal
+
+            const nomePlanilha = document.createElement("span");
+            nomePlanilha.textContent = nome;
+            nomePlanilha.style.cursor = "pointer";
+            nomePlanilha.style.color = "#007bff";
+            nomePlanilha.style.textDecoration = "underline";
+            nomePlanilha.style.marginRight = "10px";
+
+            nomePlanilha.addEventListener("click", () => {
+                carregarDados(nome);
+                document.body.removeChild(menuCarregar); // Fecha o menu após carregar
+            });
+
+            const excluirBtn = document.createElement("button");
+            excluirBtn.textContent = "Excluir";
+            excluirBtn.style.backgroundColor = "#f44336";
+            excluirBtn.style.color = "#fff";
+            excluirBtn.style.border = "none";
+            excluirBtn.style.padding = "3px 6px"; // Diminui ainda mais o tamanho do botão
+            excluirBtn.style.borderRadius = "5px";
+            excluirBtn.style.cursor = "pointer";
+            excluirBtn.style.marginTop = "5px"; // Adiciona um pequeno espaço entre os botões
+            excluirBtn.style.fontSize = "10px"; // Reduz a fonte
+
+            excluirBtn.addEventListener("click", () => {
+                if (confirm(`Você tem certeza que deseja excluir a planilha "${nome}"?`)) {
+                    localStorage.removeItem(nome);
+                    alert(`Planilha "${nome}" excluída com sucesso.`);
+                    document.body.removeChild(menuCarregar);
                 }
             });
+
+            item.appendChild(nomePlanilha);
+            item.appendChild(excluirBtn);
+            listaPlanilhas.appendChild(item);
+        });
+
+        menuCarregar.appendChild(listaPlanilhas);
+        const fecharBtn = document.createElement("button");
+        fecharBtn.textContent = "Fechar";
+        fecharBtn.style.marginTop = "20px";
+        fecharBtn.style.backgroundColor = "#ddd";
+        fecharBtn.style.color = "#000";
+        fecharBtn.style.border = "none";
+        fecharBtn.style.padding = "5px 10px";
+        fecharBtn.style.borderRadius = "5px";
+        fecharBtn.style.cursor = "pointer";
+        fecharBtn.addEventListener("click", () => {
+            document.body.removeChild(menuCarregar); // Fecha o menu sem carregar nada
+        });
+
+        menuCarregar.appendChild(fecharBtn);
+        document.body.appendChild(menuCarregar);
+    } else {
+        alert("Nenhuma planilha salva.");
+    }
+});
 
             document.getElementById("adicionar-linha").addEventListener("click", () => {
                 const novaLinha = document.createElement("tr");
