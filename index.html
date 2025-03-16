@@ -456,28 +456,3 @@
     </script>
 </body>
 </html>
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste WebView</title>
-    <script>
-        function salvarDados() {
-            let texto = document.getElementById("inputTexto").value;
-            Android.salvarNoAndroid(texto);
-        }
-
-        function carregarDados() {
-            let dados = Android.carregarDoAndroid();
-            document.getElementById("inputTexto").value = dados;
-        }
-    </script>
-</head>
-<body>
-    <h1>Teste de Comunicação WebView</h1>
-    <input type="text" id="inputTexto" placeholder="Digite algo...">
-    <button onclick="salvarDados()">Salvar</button>
-    <button onclick="carregarDados()">Carregar</button>
-</body>
-</html>
