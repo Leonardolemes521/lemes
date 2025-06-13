@@ -7,23 +7,38 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+             margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #0b0f1a;
+        color: #ffffff;
         }
 
         h1 {
-            text-align: center;
+            margin-left: 60px;  
+              
         }
 
         .menu {
             text-align: center;
             margin-bottom: 20px;
+             background-color: #131a2a;
+        border-bottom: 1px solid #2a2f45;
         }
+
+  .video-lateral {
+  width: 300px;         /* Define a largura do vídeo */
+  height: auto;         /* Mantém proporção automática */
+  position: absolute;   /* Para posicionar livremente */
+  top: 20px;            /* Distância do topo da tela */
+  left: 1200px;           /* Distância da esquerda */
+  z-index: 1;           /* Coloca o vídeo sobre o fundo, mas atrás de outros elementos se necessário */
+}
+
 
         .menu button {
             padding: 10px 20px;
             background-color: #4CAF50;
-            color: white;
+            color: rgb(255, 255, 255);
             border: none;
             border-radius: 5px;
             margin: 5px;
@@ -41,7 +56,7 @@
         }
 
         th, td {
-            border: 1px solid #ddd;
+            border: 1px solid #f6f1f3;
             padding: 6px;
             text-align: center;
         }
@@ -61,7 +76,7 @@
         button {
             padding: 5px 10px;
             background-color: #ff6666;
-            color: #fff;
+            color: #ffffff;
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -103,9 +118,40 @@
         .grafico-valor {
             margin-top: 10px;
             font-size: 12px;
-            color: #333;
+            color: #e9f1ee;
             font-weight: bold;
         }
+
+       #img1 {
+  margin-left: 1000px;
+  margin-top: -170px;
+  width: 170px;
+  height: auto;
+}
+
+ #img2 {
+  
+  width: 35px;
+  position: relative;
+  left: 15px;
+  top: -62px; /* use 'top' com valores negativos para subir */
+  margin-left: 350px;
+}
+
+.video-lateral {
+  width: 60vw;       /* largura grande, quase toda a tela */
+  height: 120px;     /* um pouco mais fino */
+  position: absolute;
+  top: 5px;
+  right: 120px;       /* posiciona na direita */
+  object-fit: cover;
+  z-index: 1;
+  border-radius: 10px; /* opcional */
+
+  transform: translateX(-100px); /* Move 100px pra esquerda */
+}
+
+  
 
         @media (max-width: 600px) {
             table, .graficos {
@@ -134,11 +180,25 @@
                 padding: 4px;
                 font-size: 12px;
             }
-        }
+
+          
+
+          }
     </style>
 </head>
 <body>
+
+<video class="video-lateral" autoplay muted loop>
+  <source src="31251-385265625_small.mp4" type="video/mp4">
+  Seu navegador não suporta vídeos HTML5.
+</video>
+
+
+  
     <h1>Planilha de Custos</h1>
+
+          
+<img id="img2"  src="Dark Green Modern Illustrative Finance Service Logo.png" alt="lk">
 
     <div class="menu">
         <button id="nova-planilha">Criar Nova Planilha</button>
