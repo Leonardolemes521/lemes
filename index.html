@@ -25,15 +25,6 @@
         border-bottom: 1px solid #2a2f45;
         }
 
-  .video-lateral {
-  width: 300px;         /* Define a largura do vídeo */
-  height: auto;         /* Mantém proporção automática */
-  position: absolute;   /* Para posicionar livremente */
-  top: 20px;            /* Distância do topo da tela */
-  left: 1200px;           /* Distância da esquerda */
-  z-index: 1;           /* Coloca o vídeo sobre o fundo, mas atrás de outros elementos se necessário */
-}
-
 
         .menu button {
             padding: 10px 20px;
@@ -71,6 +62,7 @@
             text-align: center;
             border: none;
             outline: none;
+            background-color: transparent;
         }
 
         button {
@@ -122,33 +114,19 @@
             font-weight: bold;
         }
 
-       #img1 {
-  margin-left: 1000px;
-  margin-top: -170px;
-  width: 170px;
-  height: auto;
-}
 
- #img2 {
-  
-  width: 35px;
-  position: relative;
-  left: 15px;
-  top: -62px; /* use 'top' com valores negativos para subir */
-  margin-left: 350px;
-}
 
 .video-lateral {
   width: 60vw;       /* largura grande, quase toda a tela */
   height: 120px;     /* um pouco mais fino */
   position: absolute;
-  top: 5px;
-  right: 120px;       /* posiciona na direita */
+  top: -36px;
+  right: -20px;       /* posiciona na direita */
   object-fit: cover;
   z-index: 1;
   border-radius: 10px; /* opcional */
 
-  transform: translateX(-100px); /* Move 100px pra esquerda */
+  transform: translateX(-20px); /* Move 100px pra esquerda */
 }
 
   
@@ -181,24 +159,19 @@
                 font-size: 12px;
             }
 
-            .video-lateral {
-    width: 100vw;     /* Ocupa toda a largura da tela */
-    height: 80px;     /* Mais fino no celular */
-    left: 0;          /* Grudado na esquerda */
-    top: 0;           /* Grudado no topo */
-    border-radius: 0; /* Retira bordas se quiser */
+           .video-lateral {
+    position: fixed;      /* fixa no topo da tela */
+    top: 0;               /* gruda no topo */
+    left: 0;              /* gruda na esquerda */
+    width: 100vw;         /* ocupa toda a largura da tela */
+    height: 60px;         /* faixa fina, ajuste conforme preferir */
+    border-radius: 0;     /* remove borda arredondada para ficar reta */
+    transform: none;      /* remove transformações */
+    z-index: 9999;        /* fica sobre tudo */
+    object-fit: cover;
   }
 
-
-   #img2 {
-    width: 30px;       /* Um pouco menor no celular */
-    position: absolute; /* Para posicionamento livre */
-    top: 10px;          /* Desce um pouco */
-    left: 10px;         /* Encosta na esquerda */
-    margin-left: 0;     /* Remove a margem */
-    z-index: 10;        /* Fica na frente de outros elementos */
-  }
-
+   
           
 
           }
@@ -213,10 +186,10 @@
 
 
   
-    <h1>Planilha de Custos</h1>
+    <h1>Planilha de Custos 📱💸📊</h1>
 
           
-<img id="img2"  src="Dark Green Modern Illustrative Finance Service Logo.png" alt="lk">
+
 
     <div class="menu">
         <button id="nova-planilha">Criar Nova Planilha</button>
